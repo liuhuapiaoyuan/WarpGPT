@@ -14,9 +14,10 @@ import (
 	"WarpGPT/pkg/plugins/api/session"
 	"WarpGPT/pkg/plugins/api/unofficialapi"
 	"WarpGPT/pkg/plugins/service/proxypool"
-	"github.com/bogdanfinn/fhttp"
-	"github.com/gin-gonic/gin"
+	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func CORSMiddleware() gin.HandlerFunc {

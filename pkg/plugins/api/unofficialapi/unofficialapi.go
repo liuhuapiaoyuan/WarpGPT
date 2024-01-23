@@ -9,14 +9,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	http "github.com/bogdanfinn/fhttp"
-	tls_client "github.com/bogdanfinn/tls-client"
-	"github.com/pkoukk/tiktoken-go"
 	"io"
 	shttp "net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	http "github.com/bogdanfinn/fhttp"
+	tls_client "github.com/bogdanfinn/tls-client"
+	"github.com/pkoukk/tiktoken-go"
 
 	"github.com/gin-gonic/gin"
 )

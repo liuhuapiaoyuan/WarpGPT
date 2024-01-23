@@ -7,14 +7,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	http "github.com/bogdanfinn/fhttp"
-	tls_client "github.com/bogdanfinn/tls-client"
-	"github.com/bogdanfinn/tls-client/profiles"
 	"io"
 	"net/url"
 	"os"
 	"regexp"
 	"strings"
+
+	http "github.com/bogdanfinn/fhttp"
+	tls_client "github.com/bogdanfinn/tls-client"
+	"github.com/bogdanfinn/tls-client/profiles"
 )
 
 type Error struct {
@@ -65,7 +66,7 @@ func NewAuthenticator(emailAddress, password string, puid string) *Authenticator
 		Password:     password,
 		Proxy:        os.Getenv("proxy"),
 		PUID:         puid,
-		UserAgent:    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+		UserAgent:    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.106 Safari/537.36",
 	}
 	jar := tls_client.NewCookieJar()
 	cookie := &http.Cookie{
@@ -74,13 +75,25 @@ func NewAuthenticator(emailAddress, password string, puid string) *Authenticator
 		Path:   "/",
 		Domain: ".openai.com",
 	}
+	// defaultCipherSuites := []uint16{0xc02f, 0xc030, 0xc02b, 0xc02c, 0xcca8, 0xcca9, 0xc013, 0xc009,
+	// 	0xc014, 0xc00a, 0x009c, 0x009d, 0x002f, 0x0035, 0xc012, 0x000a}
+
 	urls, _ := url.Parse("https://openai.com")
 	jar.SetCookies(urls, []*http.Cookie{cookie})
+
+	// 创建自定义的 TLS 配置
+	// tlsConfig := &tls.Config{
+	// 	CipherSuites: append(defaultCipherSuites[8:], defaultCipherSuites[:8]...),
+	// }
+
+	// 创建 TransportOptions 实例
+
 	options := []tls_client.HttpClientOption{
 		tls_client.WithTimeoutSeconds(20),
-		tls_client.WithClientProfile(profiles.Chrome_109),
+		tls_client.WithClientProfile(profiles.Chrome_117),
 		tls_client.WithNotFollowRedirects(),
 		tls_client.WithCookieJar(jar),
+		tls_client.WithRandomTLSExtensionOrder(),
 		tls_client.WithProxyUrl(env.Env.Proxy),
 	}
 	auth.Session, _ = tls_client.NewHttpClient(tls_client.NewNoopLogger(), options...)
@@ -93,11 +106,12 @@ func (auth *Authenticator) URLEncode(str string) string {
 
 func (auth *Authenticator) Begin() *Error {
 	logger.Log.Debug("Auth Begin")
+	logger.Log.Debug(auth.UserAgent)
 
 	url := "https://" + env.Env.OpenaiHost + "/api/auth/csrf"
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return NewError("begin", 0, "", err)
+		return NewError("begin1", 0, "", err)
 	}
 
 	req.Header.Set("Host", ""+env.Env.OpenaiHost+"")
@@ -110,13 +124,13 @@ func (auth *Authenticator) Begin() *Error {
 
 	resp, err := auth.Session.Do(req)
 	if err != nil {
-		return NewError("begin", 0, "", err)
+		return NewError("begin2", 0, "", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return NewError("begin", 0, "", err)
+		return NewError("begin3", 0, "", err)
 	}
 
 	if resp.StatusCode == 200 && strings.Contains(resp.Header.Get("Content-Type"), "json") {
@@ -126,13 +140,13 @@ func (auth *Authenticator) Begin() *Error {
 		}
 		err = json.Unmarshal(body, &csrfTokenResponse)
 		if err != nil {
-			return NewError("begin", 0, "", err)
+			return NewError("begin4", 0, "", err)
 		}
 
 		csrfToken := csrfTokenResponse.CsrfToken
 		return auth.partOne(csrfToken)
 	} else {
-		err := NewError("begin", resp.StatusCode, string(body), fmt.Errorf("error: Check details"))
+		err := NewError("begin5", resp.StatusCode, string(body), fmt.Errorf("error: Check details"))
 		return err
 	}
 }

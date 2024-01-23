@@ -6,11 +6,12 @@ import (
 	ctx "context"
 	"encoding/json"
 	"errors"
-	http "github.com/bogdanfinn/fhttp"
 	"io"
 	"strconv"
 	"strings"
 	"time"
+
+	http "github.com/bogdanfinn/fhttp"
 )
 
 type proxyUrl struct {
